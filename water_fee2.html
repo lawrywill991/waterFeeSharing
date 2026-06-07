@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>水費分攤計算系統</title>
+    <style>
+        body {
+            font-family: -apple-system, sans-serif;
+            padding: 15px;
+            background-color: #f4f7f6;
+        }
+
+        .card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            color: #2c3e50;
+            text-align: center;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th,
+        td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        input {
+            width: 80px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .header-section {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .btn-group {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-calc {
+            background-color: #27ae60;
+            color: white;
+        }
+
+        .btn-clear {
+            background-color: #e67e22;
+            color: white;
+        }
+
+        .result-money {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        /* 彈窗背景：全螢幕半透明黑 */
+        .modal {
+            display: none;
+            /* 預設隱藏！就像 tkinter 沒呼叫前不會出現 */
+            position: fixed;
+            /* 固定在螢幕上，不隨捲軸滾動 */
+            z-index: 1000;
+            /* 確保它在最前面 */
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            /* 黑色半透明遮罩 */
+        }
+
+        /* 彈窗小盒子 */
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            /* 距離頂部 15%，水平居中 */
+            padding: 20px;
+            border-radius: 10px;
+            width: 300px;
+            /* 寬度可以自己調 */
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="card">
+        <h2>水費分攤計算系統</h2>
+
+        <div class="header-section">
+            <div>前次抄表日: <input type="text" id="date1" placeholder="MM/DD"></div>
+            <div>本次抄表日: <input type="text" id="date2" placeholder="MM/DD"></div>
+            <div>本次水單總費用: <input type="number" id="total_bill" value="0"></div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>項目/租客</th>
+                    <th>上次度數</th>
+                    <th>本次度數</th>
+                    <th>分攤金額</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>廁所</td>
+                    <td><input type="number" id="r0_v1" value="0"></td>
+                    <td><input type="number" id="r0_v2" value="0"></td>
+                    <td>--</td>
+                </tr>
+                <tr>
+                    <td><input type="text" id="name1" value="洗車廠"></td>
+                    <td><input type="number" id="r1_v1" value="0"></td>
+                    <td><input type="number" id="r1_v2" value="0"></td>
+                    <td id="m1" class="result-money">0.0</td>
+                </tr>
+                <tr>
+                    <td><input type="text" id="name2" value="水果行"></td>
+                    <td><input type="number" id="r2_v1" value="0"></td>
+                    <td><input type="number" id="r2_v2" value="0"></td>
+                    <td id="m2" class="result-money">0.0</td>
+                </tr>
+                <tr>
+                    <td><input type="text" id="name3" value="皇億修車廠"></td>
+                    <td><input type="number" id="r3_v1" value="0"></td>
+                    <td><input type="number" id="r3_v2" value="0"></td>
+                    <td id="m3" class="result-money">0.0</td>
+                </tr>
+                <tr>
+                    <td><input type="text" id="name4" value="正芳驗車廠"></td>
+                    <td><input type="number" id="r4_v1" value="0"></td>
+                    <td><input type="number" id="r4_v2" value="0"></td>
+                    <td id="m4" class="result-money">0.0</td>
+                </tr>
+                <tr>
+                    <td><input type="text" id="name5" value="喬美海產店"></td>
+                    <td><input type="number" id="r5_v1" value="0"></td>
+                    <td><input type="number" id="r5_v2" value="0"></td>
+                    <td id="m5" class="result-money">0.0</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="btn-group">
+            <!-- <button class="btn-check" onclick="showModal('這是showerror式','confirm_modal')">測試JS按鈕先別按</button> -->
+            <button class="btn-calc" onclick="calculateFee()">水費計算</button>
+            <button class="btn-clear" onclick="clearCalculator()">清除計算</button>
+        </div>
+    </div>
+    <div id="okcancel_modal" class="modal">
+        <div class="modal-content">
+            <h3 id="modalTitle">系統訊息</h3>
+            <p id="modalMessage">說明</p>
+            <button class="btn-calc" id="ok" onclick="caclculator()">確定</button>
+            <button onclick="closeModal('okcancel_modal')">取消</button>
+        </div>
+    </div>
+    <div id="confirm_modal" class="modal">
+        <div class="modal-content">
+            <h3 id="modalTitle_confirm">系統訊息</h3>
+            <p id="modalMessage_confirm">說明</p>
+            <button class="btn-calc" onclick="closeModal('confirm_modal')">確定</button>
+        </div>
+    </div>
+
+    <script>
+        function checkAllData() {
+        }
+
+        function calculateFee() {
+            let toelit = Number(document.getElementById('r0_v2').value) - Number(document.getElementById('r0_v1').value);
+            let delta1 = Number(document.getElementById('r1_v2').value) - Number(document.getElementById('r1_v1').value);
+            let delta2 = Number(document.getElementById('r2_v2').value) - Number(document.getElementById('r2_v1').value);
+            let delta3 = Number(document.getElementById('r3_v2').value) - Number(document.getElementById('r3_v1').value);
+            let delta4 = Number(document.getElementById('r4_v2').value) - Number(document.getElementById('r4_v1').value);
+            let delta5 = Number(document.getElementById('r5_v2').value) - Number(document.getElementById('r5_v1').value);
+            const name0 = '廁所'
+            const name1 = String(document.getElementById('name1').value);
+            const name2 = String(document.getElementById('name2').value);
+            const name3 = String(document.getElementById('name3').value);
+            const name4 = String(document.getElementById('name4').value);
+            const name5 = String(document.getElementById('name5').value);
+            const name6 = '總金額'
+            let total_money = Number(document.getElementById('total_bill').value)
+            // 記得Web 習慣和pandas差太多，不是{[]}而是[{}]。所以dataArrey才這樣寫
+            let dataArrey = [{ Key: name6, Value: total_money },
+            { Key: name0, Value: toelit },
+            { Key: name1, Value: delta1 },
+            { Key: name2, Value: delta2 },
+            { Key: name3, Value: delta3 },
+            { Key: name4, Value: delta4 },
+            { Key: name5, Value: delta5 },];
+            let datalists = [toelit, delta1, delta2, delta3, delta4, delta5];
+            let zeroItem = [];
+            for (let data of dataArrey) {
+                if (data.Value <= 0) {
+                    zeroItem.push(data.Key)
+                }
+            }
+
+
+            if (zeroItem.length != 0) {
+                var msg = `請確認${zeroItem}本月無耗用 `;
+                showModal(msg, `okcancel_modal`)
+                console.log(zeroItem)
+            }
+            else {
+                let msg = '檢查無負值，是否進行計算'
+                showModal(msg, 'okcancel_modal')
+                console.log("無輸入負值")
+
+            };
+        }
+        function caclculator() {
+            let toelit = Number(document.getElementById('r0_v2').value) - Number(document.getElementById('r0_v1').value);
+            let delta1 = Number(document.getElementById('r1_v2').value) - Number(document.getElementById('r1_v1').value);
+            let delta2 = Number(document.getElementById('r2_v2').value) - Number(document.getElementById('r2_v1').value);
+            let delta3 = Number(document.getElementById('r3_v2').value) - Number(document.getElementById('r3_v1').value);
+            let delta4 = Number(document.getElementById('r4_v2').value) - Number(document.getElementById('r4_v1').value);
+            let delta5 = Number(document.getElementById('r5_v2').value) - Number(document.getElementById('r5_v1').value);
+            let total = toelit + delta1 + delta2 + delta3 + delta4 + delta5
+            const name0 = '廁所'
+            const name1 = String(document.getElementById('name1').value);
+            const name2 = String(document.getElementById('name2').value);
+            const name3 = String(document.getElementById('name3').value);
+            const name4 = String(document.getElementById('name4').value);
+            const name5 = String(document.getElementById('name5').value);
+            // closeModal('okcancel_modal')
+            let msg = `本月總耗水為${total}度，請核對水費單是否在${total}正負2度內`
+            console.log(`本月總耗水為${total}度，請核對水費單是否在${total}正負2度內`)
+            // showModal(msg, 'okcancel_modal')
+
+            let without_toelit_total = delta1 + delta2 + delta3 + delta4 + delta5;
+            let first_renter_plus = delta1 + toelit * (
+                delta1 / without_toelit_total)
+            let second_renter_plus = delta2 + toelit * (
+                delta2 / without_toelit_total)
+            let third_renter_plus = delta3 + toelit * (
+                delta3 / without_toelit_total)
+            let fourth_renter_plus = delta4 + toelit * (
+                delta4 / without_toelit_total)
+            let fifth_renter_plus = delta5 + toelit * (
+                delta5 / without_toelit_total)
+            console.log(first_renter_plus, second_renter_plus, fifth_renter_plus)
+
+
+            let total_money = Number(document.getElementById('total_bill').value)
+            let first_renter_money = Number(
+                (total_money * (first_renter_plus / total)).toFixed(1)
+            )
+            let second_renter_money = Number(
+                (total_money * (second_renter_plus / total)).toFixed(1)
+            )
+            let third_renter_money = Number(
+                (total_money * (third_renter_plus / total)).toFixed(1)
+            )
+            let fourth_renter_money = Number(
+                (total_money * (fourth_renter_plus / total)).toFixed(1)
+            )
+            let fifth_renter_money = Number(
+                (total_money * (fifth_renter_plus / total)).toFixed(1))
+
+            console.log(first_renter_money, fifth_renter_money)
+            const m1 = document.getElementById('m1')
+            m1.innerText = first_renter_money
+            const m2 = document.getElementById('m2')
+            m2.innerText = second_renter_money
+            const m3 = document.getElementById('m3')
+            m3.innerText = third_renter_money
+            const m4 = document.getElementById('m4')
+            m4.innerText = fourth_renter_money
+            const m5 = document.getElementById('m5')
+            m5.innerText = fifth_renter_money
+            closeModal('okcancel_modal')
+        }
+        function showModal(msg, modaltype) {
+            const modalBox = document.getElementById(modaltype);
+            if (modaltype === `okcancel_modal`) {
+                var messageLabel = document.getElementById('modalMessage');
+                // const ok = document.getElementById('ok');
+            }
+            else { var messageLabel = document.getElementById('modalMessage_confirm'); }
+            messageLabel.innerText = msg;
+            modalBox.style.display = 'block';
+        }
+        function closeModal(modalname) {
+            document.getElementById(modalname).style.display = "none";
+        }
+
+
+        // --- 清除功能 ---
+        function clearCalculator() {
+            const inputs = document.querySelectorAll('input[type="number"]');
+            inputs.forEach(input => input.value = 0);
+
+            // 重設名稱
+            document.getElementById('name1').value = "洗車廠";
+            document.getElementById('name2').value = "水果行";
+            document.getElementById('name3').value = "皇億修車廠";
+            document.getElementById('name4').value = "正芳驗車廠";
+            document.getElementById('name5').value = "喬美海產店";
+
+            // 重設顯示金額
+            for (let i = 1; i <= 5; i++) {
+                document.getElementById(`m${i}`).innerText = "0.0";
+            }
+            //memory.isLoaded = false;
+            showModal("計算已重設&歸零", "confirm_modal");
+        }
+    </script>
+
+</body>
+
+</html>
